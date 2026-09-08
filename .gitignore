@@ -1,0 +1,9 @@
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# Raw data (optional: if you don't want to upload massive raw CSVs to GitHub)
+# Data/Raw/
