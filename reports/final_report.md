@@ -101,3 +101,27 @@ The raw operational records were constructed by joining daily store checkouts (`
 ---
 *Certified Clean Dataset Location:* `Data/Cleaned/store_sales_cleaned.csv`  
 *Generated Visualization Assets:* `Visualizations/`
+---
+
+# 🤖 Part 2: Advanced Deep-Dive Insights for AI/ML Modeling Team
+
+### 1. Store Clustering & Heterogeneity
+- **Observation:** Store-gulo ke 3-ti performance tier-e (`Low_Tier`, `Medium_Tier`, `High_Tier`) vag kora hoyeche. High-tier store-gulo te footfall ebong basket size dutoi onek beshi.
+- **ML Guidance:** Tree-based models (XGBoost/LightGBM)-e store-level heteroscedasticity handle korar jonno cross-validation folds-er vitor theke Target Encoding (`Store_Avg_Sales`, `Store_Std_Sales`) use korte hobe.
+
+### 2. Basket Size & Data Leakage Warning
+- **Critical Warning:** `Customers` column-er sathe `Sales`-er correlation shobcheye beshi thakleo test set ba real-world forecasting-e actual customer count thakbe na.
+- **ML Guidance:** Direct raw `Customers` feature hisebe use na kore historical proxy features (jemon: `Store_Historical_SalesPerCustomer` ebong `Store_Avg_Customers`) build korte hobe.
+
+### 3. Promotional Dynamics & Weekly Cyclicity
+- **Observation:** Promotion-er impact shob din shoman noy; Monday ebong Friday-te promotional lift shobcheye beshi dekha jay.
+- **ML Guidance:** Model-e interaction terms add korte hobe, jemon `Promo_x_DayOfWeek` ba `Is_Promo_Monday`.
+
+### 4. Seasonality & Holiday Buffers
+- **Observation:** December-e annual peak spike hoy ebong State Holiday-r thik ager din customer-ra stocking kore, jar fole abnormal sales hike hoy.
+- **ML Guidance:** Features hisebe `Days_Until_Christmas`, `Days_Before_StateHoliday`, ebong `Days_After_StateHoliday` count variables inject korte hobe.
+
+### 5. Time-Series Autoregressive Lags
+- **Observation:** Autocorrelation analysis onujayi `Lag_7` (7 diner ager sales) ebong `7-Day Rolling Mean` shobcheye strong predictor.
+- **ML Guidance:** Autoregressive feature matrix-e `Sales_Lag_7`, `Sales_Lag_14`, ebong `Rolling_Mean_7` must include korte hobe.
+- **Validation Split:** Kono random train-test split use kora jabe na; strictly time-series chronological split (e.g. last 6 weeks as validation) follow korte hobe.
