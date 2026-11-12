@@ -67,7 +67,7 @@ pip install -r requirements.txt
 
 Python 3.10 or 3.11 is recommended for the most predictable compatibility with the ML ecosystem. If you already have another supported Python version and package installation succeeds, try the smoke test before changing your installation.
 
-## Train the forecasting model
+## Run the dataset quality audit\n\nBefore training, generate a reproducible quality summary from the cleaned CSV:\n\n```powershell\npython src/data/validate_dataset.py\n```\n\nThe command writes `reports/data_quality_audit.md` and `reports/data_quality_audit.json`. It reports missing values, duplicate Store-Date rows, invalid/zero/negative sales, date coverage, and unobserved store-days within each store's date span. Because the cleaned file contains only open, positive-sales rows, unobserved store-days are descriptive gaps—not automatically data errors.\n\n## Train the forecasting model
 
 Run from the repository root:
 
@@ -129,7 +129,7 @@ Streamlit prints a local URL (usually `http://localhost:8501`). Open it in your 
 
 ## Tests
 
-Run the lightweight feature-engineering tests:
+Run the feature-engineering and dataset-audit tests:
 
 ```powershell
 python -m pytest -q
