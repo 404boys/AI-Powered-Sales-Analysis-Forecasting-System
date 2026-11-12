@@ -17,7 +17,7 @@ An end-to-end retail analytics and machine-learning project using the Rossmann S
 - **Forecasting:** LightGBM regression on a log-transformed sales target.
 - **Time-aware features:** prior-day, prior-week, prior-fortnight, and shifted rolling sales features.
 - **Model evaluation:** RMSPE, MAE, RMSE, matched-row seven-day-lag baseline comparison, and gain-based feature importance.
-- **Interactive website:** Overview, Sales Explorer, recursive Future Forecast, What-If Simulator, and Model Performance pages.
+- **Interactive website:** Overview, Sales Explorer, recursive Future Forecast, recursive Future Forecast, What-If Simulator, and Model Performance pages.
 
 ## Repository structure
 
@@ -38,6 +38,8 @@ An end-to-end retail analytics and machine-learning project using the Rossmann S
 │   ├── VIVA_QUESTIONS.md
 │   └── WEBSITE_DEPLOYMENT.md
 ├── reports/
+│   ├── final_report.md
+│   ├── data_quality_audit.md       # Generated audit output
 │   └── model_evaluation.md
 ├── src/
 │   ├── data/
@@ -45,6 +47,8 @@ An end-to-end retail analytics and machine-learning project using the Rossmann S
 │   ├── features/
 │   │   └── build_features.py
 │   └── modeling/
+│       ├── forecast.py
+│       ├── predict.py
 │       └── train_lightgbm.py
 ├── tests/
 │   ├── test_dataset_validation.py
@@ -140,6 +144,7 @@ Open the local URL printed by Streamlit, usually `http://localhost:8501`.
 |---|---|
 | Overview | Recorded sales trends and store-type comparisons |
 | Sales Explorer | Historical sales for a selected store |
+| Future Forecast | Recursive 7-, 14-, or 28-day store forecasts using selected assumptions |
 | Future Forecast | Recursive 7-, 14-, or 28-day store forecasts using selected assumptions |
 | What-If Simulator | Compare predictions after changing promotion and holiday assumptions |
 | Model Performance | Validation metrics, matched baseline comparison, and feature importance |
