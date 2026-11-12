@@ -53,7 +53,9 @@ Only values generated in the local `artifacts/model/metrics.json` after a succes
 
 ## What-If Simulator
 
-The app lets a user change promotion, school-holiday, and state-holiday values for a selected historical store-day and compare model predictions. Historical lag features remain fixed.
+The app includes a recursive Future Forecast page for 7-, 14-, or 28-day store forecasts. Predicted sales are fed into subsequent lag features; the current demo assumes the store stays open and holds selected promotion/holiday assumptions constant.
+
+The What-If simulator lets a user change promotion, school-holiday, and state-holiday values for a selected historical store-day and compare model predictions. Historical lag features remain fixed.
 
 This is a model-based sensitivity scenario, not a causal estimate. The result does not prove that changing a promotion or holiday would cause the displayed sales difference.
 
@@ -65,6 +67,7 @@ This is a model-based sensitivity scenario, not a causal estimate. The result do
 4. The dataset is historical and may not represent current store operations or market conditions.
 5. Feature importance is model-specific and should not be interpreted as causal influence.
 6. The What-If simulator is not a causal experiment.
+7. Future forecasts are recursive demonstrations under fixed assumptions and do not include prediction intervals.
 7. Gain-based feature importance describes model split contribution, not causal impact or effect direction.
 
 ## Before any real-world use
