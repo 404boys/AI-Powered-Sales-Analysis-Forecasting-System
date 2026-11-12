@@ -1,0 +1,76 @@
+name: Real-data model and app smoke test
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "src/features/**"
+      - "src/modeling/**"
+      - "src/data/**"
+      - "app/**"
+      - "tests/**"
+      - "requirements.txt"
+      - "Data/Cleaned/store_sales_cleaned.csv"
+      - ".github/workflows/model-smoke-test.yml"
+
+jobs:
+  smoke-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install project dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run unit tests
+        run: python -m pytest -q
+
+      - name: Audit the committed cleaned dataset
+        run: python src/data/validate_dataset.py
+
+      - name: Train a real-data smoke-test model
+        run: python src/modeling/train_lightgbm.py --n-estimators 40 --validation-days 14
+
+      - name: Smoke-test the Streamlit application
+        run: |
+          python - <<'PY'
+          from streamlit.testing.v1 import AppTest
+
+          app = AppTest.from_file("app/app.py", default_timeout=180)
+          app.run()
+          assert not app.exception, app.exception
+
+          app.sidebar.radio[0].set_value("Sales Explorer").run()
+          assert not app.exception, app.exception
+
+          app.sidebar.radio[0].set_value("What-If Simulator").run()
+          assert not app.exception, app.exception
+
+          app.sidebar.radio[0].set_value("Model Performance").run()
+          assert not app.exception, app.exception
+
+          print("All four Streamlit pages completed without app exceptions.")
+          PY
+
+      - name: Upload smoke-test evaluation outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: rossmann-model-smoke-test
+          path: |
+            artifacts/model/metrics.json
+            artifacts/model/feature_importance.csv
+            reports/data_quality_audit.md
+            reports/data_quality_audit.json
+          if-no-files-found: error
+          retention-days: 14
