@@ -3,7 +3,7 @@
 import pandas as pd
 import pytest
 
-from data.validate_dataset import audit_dataset, render_markdown
+from src.data.validate_dataset import audit_dataset, render_markdown
 
 
 def sample_data():
