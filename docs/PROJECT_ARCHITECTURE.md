@@ -15,7 +15,8 @@ flowchart TD
     C --> I
     I --> J[Overview]
     I --> K[Sales Explorer]
-    I --> L[What-If Simulator]
+    I --> L[Future Forecast]
+    I --> M[What-If Simulator]
     I --> H
 ```
 
@@ -27,7 +28,9 @@ flowchart TD
 | `src/data/validate_dataset.py` | Reproducible CSV quality audit with Markdown and JSON outputs |
 | `src/features/build_features.py` | Date handling, calendar history, lag/rolling features, and feature validation |
 | `src/modeling/train_lightgbm.py` | Input checks, chronological split, model training, evaluation, and artifact saving |
-| `app/app.py` | Streamlit interface, model loading, predictions, and What-If scenarios |
+| `src/modeling/predict.py` | Shared model-row preparation and inverse-log prediction helper |
+| `src/modeling/forecast.py` | Recursive multi-day forecast generation using predicted sales as later lag history |
+| `app/app.py` | Streamlit interface, historical exploration, forecasting, and What-If scenarios |
 | `tests/test_features.py` | Unit tests for calendar lags, leakage prevention, and invalid inputs |
 | `tests/test_dataset_validation.py` | Unit tests for dataset audit calculations and report output |
 | `artifacts/model/` | Local model, metrics, feature importance, and validation predictions |
