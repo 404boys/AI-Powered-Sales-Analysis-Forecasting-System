@@ -17,7 +17,7 @@ An end-to-end retail analytics and machine-learning project using the Rossmann S
 - **Forecasting:** LightGBM regression on a log-transformed sales target.
 - **Time-aware features:** prior-day, prior-week, prior-fortnight, and shifted rolling sales features.
 - **Model evaluation:** RMSPE, MAE, RMSE, matched-row seven-day-lag baseline comparison, and gain-based feature importance.
-- **Interactive website:** Overview, Sales Explorer, What-If Simulator, and Model Performance pages.
+- **Interactive website:** Overview, Sales Explorer, recursive Future Forecast, What-If Simulator, and Model Performance pages.
 
 ## Repository structure
 
@@ -94,7 +94,7 @@ The audit reports missing values, duplicate Store-Date keys, invalid/zero/negati
 python -m pytest -q
 ```
 
-GitHub Actions runs the unit tests and Python syntax checks on pushes and pull requests. A separate real-data smoke-test workflow trains a small model against the committed dataset and checks all four Streamlit pages.
+GitHub Actions runs the unit tests and Python syntax checks on pushes and pull requests. A separate real-data smoke-test workflow trains a small model against the committed dataset and checks all five Streamlit pages.
 
 ## 3. Train the forecasting model
 
@@ -140,6 +140,7 @@ Open the local URL printed by Streamlit, usually `http://localhost:8501`.
 |---|---|
 | Overview | Recorded sales trends and store-type comparisons |
 | Sales Explorer | Historical sales for a selected store |
+| Future Forecast | Recursive 7-, 14-, or 28-day store forecasts using selected assumptions |
 | What-If Simulator | Compare predictions after changing promotion and holiday assumptions |
 | Model Performance | Validation metrics, matched baseline comparison, and feature importance |
 
