@@ -47,6 +47,7 @@ Metrics reported by the training script:
 - MAE
 - RMSE
 - Seven-day-lag baseline RMSPE and MAE
+- Model RMSPE and MAE recomputed on the exact same validation rows used by the seven-day-lag baseline
 
 Only values generated in the local `artifacts/model/metrics.json` after a successful training run should be reported. No benchmark values are pre-filled in this model card.
 
@@ -64,6 +65,7 @@ This is a model-based sensitivity scenario, not a causal estimate. The result do
 4. The dataset is historical and may not represent current store operations or market conditions.
 5. Feature importance is model-specific and should not be interpreted as causal influence.
 6. The What-If simulator is not a causal experiment.
+7. Gain-based feature importance describes model split contribution, not causal impact or effect direction.
 
 ## Before any real-world use
 
