@@ -8,16 +8,17 @@ An end-to-end retail analytics and machine-learning project using the Rossmann S
 2. Validate and prepare an analysis-ready dataset.
 3. Engineer calendar, store, promotion, and historical-sales features.
 4. Train and evaluate a machine-learning model with chronological validation.
-5. Explore store-level sales and interactive promotion/holiday scenarios.
+5. Explore historical sales, future forecasts, and promotion/holiday scenarios.
 
 ## Main features
 
 - **Data analysis:** data cleaning, exploratory analysis, and visualizations.
-- **Dataset audit:** a Python CLI that exports a Markdown and JSON quality report.
+- **Dataset audit:** a Python CLI that exports Markdown and JSON quality reports.
 - **Forecasting:** LightGBM regression on a log-transformed sales target.
 - **Time-aware features:** prior-day, prior-week, prior-fortnight, and shifted rolling sales features.
-- **Model evaluation:** RMSPE, MAE, RMSE, matched-row seven-day-lag baseline comparison, and gain-based feature importance.
-- **Interactive website:** Overview, Sales Explorer, recursive Future Forecast, recursive Future Forecast, What-If Simulator, and Model Performance pages.
+- **Recursive future forecasting:** 7-, 14-, or 28-day forecasts that feed predicted sales into subsequent lag features.
+- **Model evaluation:** RMSPE, MAE, RMSE, a matched-row seven-day-lag baseline comparison, and gain-based feature importance.
+- **Interactive website:** Overview, Sales Explorer, Future Forecast, What-If Simulator, and Model Performance pages.
 
 ## Repository structure
 
@@ -39,7 +40,6 @@ An end-to-end retail analytics and machine-learning project using the Rossmann S
 │   └── WEBSITE_DEPLOYMENT.md
 ├── reports/
 │   ├── final_report.md
-│   ├── data_quality_audit.md       # Generated audit output
 │   └── model_evaluation.md
 ├── src/
 │   ├── data/
@@ -52,7 +52,8 @@ An end-to-end retail analytics and machine-learning project using the Rossmann S
 │       └── train_lightgbm.py
 ├── tests/
 │   ├── test_dataset_validation.py
-│   └── test_features.py
+│   ├── test_features.py
+│   └── test_forecast.py
 ├── .github/workflows/
 │   ├── python-ci.yml
 │   └── model-smoke-test.yml
@@ -85,12 +86,7 @@ Python 3.10 or 3.11 is recommended for predictable compatibility with the machin
 python src/data/validate_dataset.py
 ```
 
-This creates:
-
-- `reports/data_quality_audit.md`
-- `reports/data_quality_audit.json`
-
-The audit reports missing values, duplicate Store-Date keys, invalid/zero/negative sales, date coverage, and unobserved store-days within each store's observed date span. Since the cleaned source contains only open, positive-sales rows, an unobserved store-day is a descriptive gap—not automatically a data error.
+This creates `reports/data_quality_audit.md` and `reports/data_quality_audit.json`. The audit reports missing values, duplicate Store-Date keys, invalid/zero/negative sales, date coverage, and unobserved store-days within each store's date span. Since the cleaned source contains only open, positive-sales rows, an unobserved store-day is a descriptive gap—not automatically a data error.
 
 ## 2. Run the automated tests
 
@@ -98,7 +94,7 @@ The audit reports missing values, duplicate Store-Date keys, invalid/zero/negati
 python -m pytest -q
 ```
 
-GitHub Actions runs the unit tests and Python syntax checks on pushes and pull requests. A separate real-data smoke-test workflow trains a small model against the committed dataset and checks all five Streamlit pages.
+GitHub Actions runs unit tests and Python syntax checks on pushes and pull requests. A separate real-data smoke-test workflow audits the committed dataset, trains a small model, and checks all five Streamlit pages.
 
 ## 3. Train the forecasting model
 
@@ -145,9 +141,10 @@ Open the local URL printed by Streamlit, usually `http://localhost:8501`.
 | Overview | Recorded sales trends and store-type comparisons |
 | Sales Explorer | Historical sales for a selected store |
 | Future Forecast | Recursive 7-, 14-, or 28-day store forecasts using selected assumptions |
-| Future Forecast | Recursive 7-, 14-, or 28-day store forecasts using selected assumptions |
 | What-If Simulator | Compare predictions after changing promotion and holiday assumptions |
 | Model Performance | Validation metrics, matched baseline comparison, and feature importance |
+
+The Future Forecast page assumes the selected store stays open and holds the chosen promotion and holiday assumptions constant over the horizon. It is a demonstration using historical 2013–2015 data, not a live 2026 forecast. The What-If page is a model scenario, not a causal estimate.
 
 ## Modelling approach and limitations
 
@@ -157,16 +154,16 @@ Open the local URL printed by Streamlit, usually `http://localhost:8501`.
 - The final 42 calendar days are held out chronologically; dates are not randomly shuffled.
 - Validation is **one-day-ahead rolling evaluation**. Actual sales from earlier dates, including earlier dates within the validation window, can contribute to later validation-day lag features. This is not a fixed-origin 42-day forecast.
 - Missing dates within each store's observed span are treated as zero-sales history days for lag construction. The source cannot distinguish closed days from open days omitted due to zero sales.
-- The What-If simulator holds historical lag features fixed. It is a model scenario, not a causal estimate of promotion or holiday effects.
 - Feature importance is model-specific and does not establish causation.
 
 ## Project status
 
-The source code, tests, documentation, dataset audit, forecasting pipeline, and Streamlit application are in the repository. Actual model-performance values must come from a completed training run and its generated `artifacts/model/metrics.json`. A passing CI run verifies the tested code path; it does not replace a full local training and demonstration check.
+The repository includes the cleaned dataset, analysis notebooks, data audit, feature pipeline, recursive forecasting code, tests, Streamlit app, and project documentation. A 40-round, 14-day real-data smoke test has completed; its preliminary metrics are in [the model evaluation report](reports/model_evaluation.md). Run the default 1,200-round/42-day training locally before presenting final model results.
 
 ## Further documentation
 
 - [Forecasting guide](README_FORECASTING.md)
+- [Final project report](reports/final_report.md)
 - [Model card](docs/MODEL_CARD.md)
 - [Architecture](docs/PROJECT_ARCHITECTURE.md)
 - [Demo guide](docs/PROJECT_DEMO_GUIDE.md)
