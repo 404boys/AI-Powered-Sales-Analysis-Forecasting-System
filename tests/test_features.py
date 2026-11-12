@@ -70,3 +70,53 @@ def test_duplicate_store_date_is_rejected() -> None:
     duplicated = pd.concat([data, data.iloc[[0]]], ignore_index=True)
     with pytest.raises(ValueError, match="duplicate Store-Date"):
         build_features(duplicated)
+
+
+
+def test_changing_current_day_sales_does_not_change_its_features() -> None:
+    data = make_store_data()
+    original = build_features(data)
+    changed_data = data.copy()
+    changed_data.loc[
+        (changed_data["Store"] == 1) & (changed_data["Date"] == "2015-01-03"),
+        "Sales",
+    ] = 9999.0
+    changed = build_features(changed_data)
+
+    key = (original["Store"] == 1) & (
+        original["Date"] == pd.Timestamp("2015-01-03")
+    )
+    changed_key = (changed["Store"] == 1) & (
+        changed["Date"] == pd.Timestamp("2015-01-03")
+    )
+    feature_columns = [
+        "Sales_Lag_1",
+        "Sales_Lag_7",
+        "Sales_Lag_14",
+        "Sales_Rolling_7_Mean",
+        "Sales_Rolling_14_Mean",
+        "Sales_Rolling_7_Std",
+    ]
+    pd.testing.assert_series_equal(
+        original.loc[key, feature_columns].reset_index(drop=True).iloc[0],
+        changed.loc[changed_key, feature_columns].reset_index(drop=True).iloc[0],
+    )
+
+
+def test_empty_input_is_rejected_with_clear_error() -> None:
+    with pytest.raises(ValueError, match="dataset is empty"):
+        build_features(make_store_data().iloc[0:0])
+
+
+def test_missing_store_or_date_is_rejected() -> None:
+    data = make_store_data()
+    data.loc[0, "Store"] = None
+    with pytest.raises(ValueError, match="Store and Date"):
+        build_features(data)
+
+
+def test_negative_sales_are_rejected() -> None:
+    data = make_store_data()
+    data.loc[0, "Sales"] = -1
+    with pytest.raises(ValueError, match="cannot contain negative"):
+        build_features(data)
