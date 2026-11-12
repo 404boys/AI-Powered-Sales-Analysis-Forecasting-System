@@ -90,6 +90,19 @@ if not MODEL_PATH.exists():
 featured = load_featured_data(str(DATA_PATH))
 model = load_model(str(MODEL_PATH))
 
+# Fail clearly if a stale or incompatible model artifact is supplied.
+saved_feature_names = list(model.booster_.feature_name())
+if saved_feature_names != FEATURE_COLUMNS:
+    st.error(
+        "The saved model does not match the current feature pipeline. "
+        "Retrain it with: python src/modeling/train_lightgbm.py"
+    )
+    st.stop()
+
+if featured.empty:
+    st.error("The cleaned dataset produced no usable store-day rows.")
+    st.stop()
+
 # Sidebar navigation and shared selectors.
 st.sidebar.header("Explore")
 page = st.sidebar.radio(
