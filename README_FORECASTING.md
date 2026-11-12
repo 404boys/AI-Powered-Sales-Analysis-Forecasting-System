@@ -54,7 +54,7 @@ streamlit run app/app.py
 - **Overview:** dataset-level sales trend and store-type comparison.
 - **Sales Explorer:** historical sales for a selected store.
 - **What-If Simulator:** compare model predictions after changing promotion and holiday assumptions for a selected historical store-day.
-- **Model Performance:** validation metrics and feature importance.
+- **Model Performance:** validation metrics, a matched-row comparison against a seven-day seasonal baseline, and gain-based feature importance.
 
 ## Important modelling notes
 
