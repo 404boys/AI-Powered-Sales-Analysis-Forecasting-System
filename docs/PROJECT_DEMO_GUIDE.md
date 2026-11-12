@@ -16,7 +16,7 @@ This project analyzes historical Rossmann retail sales and builds a daily store-
 6. **Open the Streamlit app.** Demonstrate Overview, Sales Explorer, Future Forecast, What-If Simulator, and Model Performance.
 7. **Demonstrate Future Forecast.** Choose a store and 7-day horizon. Explain that predictions are fed recursively into later lag features and that the store is assumed open.
 8. **Demonstrate What-If.** Change promotion or holiday assumptions and compare the model's predictions. Explain that this is not a causal estimate.
-9. **Explain evaluation.** Show the generated `artifacts/model/metrics.json`. The repository includes a 40-round, 14-day real-data smoke result; clearly distinguish it from the final default 1,200-round, 42-day training run.
+9. **Explain evaluation.** Show the generated `artifacts/model/metrics.json` and the verified default 1,200-round, 42-day results in `reports/model_evaluation.md`. Compare the model with the seven-day lag baseline.
 
 ## The differentiating features
 
@@ -39,7 +39,7 @@ All members should understand the overall pipeline and limitations. Adjust this 
 ## Important evaluation language
 
 - Use the actual scores from a successful run of the current training script.
-- Identify the smoke-test metrics as preliminary; do not call them the final 42-day results.
+- Use the verified 42-day full-training metrics. Do not substitute preliminary smoke-test values.
 - State that validation is one-day-ahead rolling evaluation, not a fixed-origin 42-day forecast.
 - Do not claim that the What-If simulator estimates causal impact.
 - The cleaned CSV contains open, positive-sales store-days only.
