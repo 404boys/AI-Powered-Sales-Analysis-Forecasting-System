@@ -44,6 +44,10 @@ def build_features(data: pd.DataFrame) -> pd.DataFrame:
     frame["Date"] = pd.to_datetime(frame["Date"], errors="raise")
     frame = frame.sort_values(["Store", "Date"]).reset_index(drop=True)
 
+    # Each store must have at most one target row per calendar date.
+    if frame.duplicated(["Store", "Date"]).any():
+        raise ValueError("Input contains duplicate Store-Date combinations.")
+
     # Build one complete daily sales history per store, within its observed span.
     calendar_parts = []
     for store, group in frame[["Store", "Date", "Sales"]].groupby("Store", sort=False):
