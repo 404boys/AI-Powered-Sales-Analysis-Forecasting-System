@@ -17,7 +17,17 @@ Windows PowerShell:
 pip install -r requirements.txt
 \`\`\`
 
-## 2. Train the model
+## 2. Audit the dataset
+
+Run this from the repository root before training:
+
+```powershell
+python src/data/validate_dataset.py
+```
+
+This writes a Markdown and JSON quality report under `reports/`.
+
+## 3. Train the model
 
 Make sure the cleaned dataset is available at:
 
@@ -43,7 +53,7 @@ Training creates local files in \`artifacts/model/\`:
 
 These generated artifacts are not committed to GitHub by default.
 
-## 3. Run the app
+## 4. Run the app
 
 \`\`\`powershell
 streamlit run app/app.py
