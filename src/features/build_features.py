@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import numpy as np
 import pandas as pd
 
 
@@ -94,6 +95,13 @@ def build_features(data: pd.DataFrame) -> pd.DataFrame:
     frame["WeekOfYear"] = frame["Date"].dt.isocalendar().week.astype("int16")
     frame["DayOfWeek"] = frame["Date"].dt.dayofweek + 1
     frame["IsWeekend"] = (frame["Date"].dt.dayofweek >= 5).astype("int8")
+
+    # Log-transform competition distance to reduce the effect of extreme distances.
+    # Keep missing distances as NaN; LightGBM can handle missing numeric values.
+    if "CompetitionDistance" in frame.columns:
+        frame["Log_CompetitionDistance"] = np.log1p(
+            pd.to_numeric(frame["CompetitionDistance"], errors="coerce")
+        )
 
     # A missing PromoInterval means the store has no Promo2 interval schedule.
     if "PromoInterval" in frame.columns:
