@@ -53,15 +53,18 @@ Retail sales often have a weekly pattern. Predicting sales from the same store s
 ### 15. What does one-day-ahead rolling validation mean?
 When predicting a validation day, the feature history may include actual sales from earlier validation days. It represents daily forecasting where yesterday's actual sales become available before predicting the next day. It is not a single forecast made 42 days in advance.
 
-## Application and What-If analysis
+## Application, recursive forecasting, and What-If analysis
 
-### 16. What does the What-If Simulator do?
+### 16. How does the Future Forecast page work?
+It starts after a selected store's latest recorded date and predicts each future day in sequence. Each prediction is added to the history used to build lag features for the next day. The current demo assumes the store remains open and keeps the selected promotion/holiday assumptions constant.
+
+### 17. What does the What-If Simulator do?
 It changes selected promotion and holiday inputs for a historical store-day, runs the model again, and compares the resulting prediction with the original prediction.
 
-### 17. Is the What-If result causal?
+### 18. Is the What-If result causal?
 No. It is a model-based scenario comparison, not a causal experiment. Historical lag features are held fixed, and the model does not prove that changing a promotion will cause the displayed sales difference.
 
-### 18. Why build a Streamlit app?
+### 19. Why build a Streamlit app?
 Streamlit makes it possible to present data exploration, model outputs, and scenario controls in an interactive browser interface without building a separate front-end and API stack.
 
 ## Be ready to show
@@ -70,7 +73,7 @@ Streamlit makes it possible to present data exploration, model outputs, and scen
 - The feature-building function.
 - The model training and chronological split.
 - The actual generated metrics and baseline comparison.
-- The four application pages.
+- The five application pages, including recursive Future Forecast.
 - A What-If scenario and its limitations.
 
 **Important:** Fill in actual metric values only after training the model successfully. Never memorize or present unverified scores.
