@@ -12,10 +12,10 @@ An end-to-end retail analytics and machine-learning project using the Rossmann S
 
 ## Main features
 
-- **Data analysis:** cleaning, quality checks, exploratory analysis, and visualizations (see the existing notebooks and analysis folders).
+- **Data analysis:** cleaning, exploratory analysis, and visualizations, plus a reproducible dataset-quality audit that exports JSON and Markdown.
 - **Forecasting:** LightGBM regression on a log-transformed sales target.
 - **Time-aware features:** calendar variables, prior-day/prior-week/prior-fortnight sales, and shifted rolling statistics.
-- **Model evaluation:** RMSPE, MAE, RMSE, and a 7-day-lag baseline.
+- **Model evaluation:** RMSPE, MAE, RMSE, a matched-row 7-day-lag baseline comparison, and gain-based feature importance.
 - **Interactive website:** Streamlit pages for an overview, store-level sales exploration, What-If simulation, and model performance.
 - **What-If analysis:** compare model predictions after changing promotion and holiday assumptions for a selected historical store-day.
 
