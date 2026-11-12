@@ -40,8 +40,19 @@ def build_features(data: pd.DataFrame) -> pd.DataFrame:
     if missing:
         raise ValueError(f"Input is missing required columns: {sorted(missing)}")
 
+    if data.empty:
+        raise ValueError("Input dataset is empty.")
+    if data[["Store", "Date"]].isna().any().any():
+        raise ValueError("Store and Date must not contain missing values.")
+
     frame = data.copy()
     frame["Date"] = pd.to_datetime(frame["Date"], errors="raise")
+    frame["Sales"] = pd.to_numeric(frame["Sales"], errors="coerce")
+    if frame["Sales"].isna().any() or not np.isfinite(frame["Sales"]).all():
+        raise ValueError("Sales must contain finite numeric values.")
+    if (frame["Sales"] < 0).any():
+        raise ValueError("Sales cannot contain negative values.")
+
     frame = frame.sort_values(["Store", "Date"]).reset_index(drop=True)
 
     # Each store must have at most one target row per calendar date.
@@ -53,7 +64,8 @@ def build_features(data: pd.DataFrame) -> pd.DataFrame:
     for store, group in frame[["Store", "Date", "Sales"]].groupby("Store", sort=False):
         group = group.set_index("Date")
         daily_index = pd.date_range(group.index.min(), group.index.max(), freq="D")
-        daily_sales = group["Sales"].reindex(daily_index, fill_value=0)
+        # Reindex on calendar dates, filling unobserved dates with zero history.
+        daily_sales = group["Sales"].reindex(daily_index, fill_value=0).astype(float)
         calendar_parts.append(
             pd.DataFrame(
                 {
