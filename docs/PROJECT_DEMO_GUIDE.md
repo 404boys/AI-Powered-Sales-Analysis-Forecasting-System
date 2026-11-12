@@ -4,49 +4,54 @@
 **AI-Powered Sales Analysis and Forecasting System**
 
 ## One-minute explanation
-This project uses the Rossmann Store Sales dataset to understand historical retail sales patterns and build a machine-learning model that predicts daily sales for individual stores. The forecasting pipeline uses LightGBM with calendar, store, promotion, competition, and historical-sales features. A Streamlit application makes the results explorable and includes a What-If Simulator that lets a user change promotion and holiday assumptions and compare the model's predictions.
+This project analyzes historical Rossmann retail sales and builds a daily store-level forecasting prototype. It uses a leakage-aware LightGBM model with calendar, store, promotion, competition, and historical-sales features. A Streamlit application presents historical sales, recursive multi-day forecasts, What-If scenarios, and model evaluation.
 
-## Suggested live demonstration (5–7 minutes)
+## Suggested live demonstration (6–8 minutes)
 
-1. **Introduce the business problem.** Retailers need to estimate store-level daily sales to support staffing, inventory, and promotion planning.
-2. **Show the data-analysis work.** Open the existing notebooks and explain data quality checks, exploratory analysis, and the key patterns found.
-3. **Explain feature engineering.** Show `src/features/build_features.py`. Explain calendar variables, previous-day/previous-week/previous-fortnight sales, and rolling statistics. Emphasize that the historical features are shifted so today's target is not used to predict today's sales.
-4. **Explain the model.** Show `src/modeling/train_lightgbm.py`. Explain the log-transformed target, LightGBM, chronological holdout, early stopping, and why `Customers` is excluded.
-5. **Open the Streamlit app.** Demonstrate Overview, Sales Explorer, What-If Simulator, and Model Performance.
-6. **Explain evaluation.** Read the measured values from the generated `artifacts/model/metrics.json`. Compare the model with the seven-day lag baseline. Never quote example or unverified metrics.
-7. **Discuss limitations and future work.** Explain the open-positive-only cleaned data, the missing-date zero-sales assumption, and that the What-If comparison is not a causal experiment.
+1. **Introduce the business problem.** Retailers need to estimate store-level daily sales to support inventory, staffing, and promotion planning.
+2. **Show the data analysis.** Open the existing notebooks and explain the data quality checks, exploratory analysis, and key patterns.
+3. **Show the dataset audit.** Run `python src/data/validate_dataset.py` and explain the missing PromoInterval values and unobserved store-days.
+4. **Explain feature engineering.** Show `src/features/build_features.py`. Explain calendar-correct lags and shifted rolling statistics; today's target is not used in today's features.
+5. **Explain the model.** Show `src/modeling/train_lightgbm.py`. Explain LightGBM, the log-transformed target, chronological validation, early stopping, and why `Customers` is excluded.
+6. **Open the Streamlit app.** Demonstrate Overview, Sales Explorer, Future Forecast, What-If Simulator, and Model Performance.
+7. **Demonstrate Future Forecast.** Choose a store and 7-day horizon. Explain that predictions are fed recursively into later lag features and that the store is assumed open.
+8. **Demonstrate What-If.** Change promotion or holiday assumptions and compare the model's predictions. Explain that this is not a causal estimate.
+9. **Explain evaluation.** Show the generated `artifacts/model/metrics.json`. The repository includes a 40-round, 14-day real-data smoke result; clearly distinguish it from the final default 1,200-round, 42-day training run.
 
-## The differentiating feature: What-If Simulator
+## The differentiating features
 
-The simulator starts from a historical store-day and lets the user change promotion, school-holiday, and state-holiday inputs. It then compares the model's original prediction with the scenario prediction.
+- **Recursive Future Forecast:** predicts multiple days in sequence and feeds each prediction into later lag features.
+- **What-If Simulator:** changes selected promotion and holiday inputs for a historical store-day and compares the model's predictions.
 
-The historical lag features are deliberately held fixed. This isolates the model's response to the selected input changes, but it does not prove that a real-world intervention would cause the same change. Explain this distinction during the presentation.
+Neither feature should be described as a causal or guaranteed business outcome. The future forecast assumes the store stays open and holds the selected assumptions constant.
 
 ## Team-of-four task split
 
 | Member | Suggested responsibility | Evidence to present |
 |---|---|---|
-| 1 | Business problem, dataset, data quality, and cleaning | Dataset description, cleaning workflow, quality checks |
-| 2 | Exploratory data analysis and visual insights | Existing notebooks and visualizations |
-| 3 | Feature engineering and LightGBM model | Feature code, training process, validation protocol |
-| 4 | Streamlit application, What-If simulator, and final integration | App walkthrough, scenario comparison, documentation |
+| 1 | Business problem, dataset, data quality, and cleaning | Dataset profile, audit output, cleaning workflow |
+| 2 | Exploratory data analysis and business insights | Existing notebooks and visualizations |
+| 3 | Feature engineering, LightGBM, and evaluation | Feature code, training process, metrics, baseline |
+| 4 | Streamlit application, Future Forecast, and What-If | App walkthrough, forecast output, scenario comparison |
 
-All members should understand the overall pipeline and be able to explain the limitations. Adjust this split to match the actual work each member completed.
+All members should understand the overall pipeline and limitations. Adjust this split to match the work each member actually completed.
 
 ## Important evaluation language
 
-- Report only the scores produced by a successful run of the current training script.
-- State clearly that the validation is one-day-ahead rolling evaluation, not a fixed-origin 42-day forecast.
+- Use the actual scores from a successful run of the current training script.
+- Identify the smoke-test metrics as preliminary; do not call them the final 42-day results.
+- State that validation is one-day-ahead rolling evaluation, not a fixed-origin 42-day forecast.
 - Do not claim that the What-If simulator estimates causal impact.
-- The cleaned CSV contains open, positive-sales store-days. Dashboard totals are totals of recorded rows, not complete totals including closed stores.
-- Missing dates within a store's observed span are treated as zero-sales history days for lag construction. The source does not identify whether each missing date was closed or an open zero-sales day.
+- The cleaned CSV contains open, positive-sales store-days only.
+- Missing dates inside each store's observed span are treated as zero-sales history for lag construction.
 
 ## Pre-submission checklist
 
-- [ ] Run the feature tests with `python -m pytest -q`.
-- [ ] Train the model and save the terminal output.
-- [ ] Check `artifacts/model/metrics.json` and compare with the baseline.
-- [ ] Start the app and visit all four pages.
-- [ ] Test at least two What-If scenarios.
-- [ ] Ensure no model metrics are invented or copied from an old draft.
+- [ ] Run `python -m pytest -q`.
+- [ ] Run `python src/data/validate_dataset.py`.
+- [ ] Run the full default model training command and save its output.
+- [ ] Review `artifacts/model/metrics.json` and the matched baseline comparison.
+- [ ] Start the app and visit all five pages.
+- [ ] Test at least two Future Forecast horizons and two What-If scenarios.
+- [ ] Ensure the report uses final measured metrics, not smoke-test metrics as final results.
 - [ ] Rehearse the presentation and agree on who explains each section.
