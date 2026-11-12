@@ -29,7 +29,7 @@ The script saves the verified run output to `artifacts/model/metrics.json` and p
 | RMSE | Root mean squared error in the dataset's sales units |
 | 7-day lag baseline | Error from predicting each store's sales using its sales seven calendar days earlier |
 
-Only fill this table with values from a completed training run. The training script also records the validation dates, row counts, best iteration, and baseline metrics in `metrics.json`.
+Only fill this table with values from a completed training run. The training script also records the validation dates, row counts, best iteration, and baseline metrics in `metrics.json`. The model and seven-day baseline are additionally compared on the exact same subset of validation rows with an available seven-day lag, so that comparison is apples-to-apples.
 
 ## Forecast protocol and limitations
 
@@ -43,7 +43,7 @@ The model excludes `Customers`, `Sales`, and `Open` from predictors. Future cust
 
 ## Feature importance
 
-The training script exports split-count feature importance to `artifacts/model/feature_importance.csv`. Add interpretation only after reviewing the generated file. Split-count importance measures how frequently a feature is used in tree splits; it does not establish causality or the direction of a feature's effect.
+The training script exports gain-based feature importance to `artifacts/model/feature_importance.csv`. Gain importance sums the improvement in the model objective attributed to splits using each feature. It is model-specific, does not establish causality, and does not show whether a feature increases or decreases sales.
 
 ## Reproducibility
 
