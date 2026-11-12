@@ -26,7 +26,7 @@ def audit_dataset(frame: pd.DataFrame) -> dict:
 
     store_count = int(frame["Store"].nunique(dropna=True))
     duplicate_store_dates = int(
-        frame.loc[:, ["Store", "Date"]].duplicated().sum()
+        pd.DataFrame({"Store": frame["Store"], "Date": dates}).duplicated().sum()
     )
 
     calendar_store_days = None
