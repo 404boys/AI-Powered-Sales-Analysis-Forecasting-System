@@ -64,6 +64,7 @@ streamlit run app/app.py
 - **Overview:** dataset-level sales trend and store-type comparison.
 - **Sales Explorer:** historical sales for a selected store.
 - **What-If Simulator:** compare model predictions after changing promotion and holiday assumptions for a selected historical store-day.
+- **Future Forecast:** recursive 7-, 14-, or 28-day forecasts that feed predicted sales into later lag features.
 - **Model Performance:** validation metrics, a matched-row comparison against a seven-day seasonal baseline, and gain-based feature importance.
 
 ## Important modelling notes
@@ -71,6 +72,7 @@ streamlit run app/app.py
 - \`Customers\` is excluded from predictors because future customer counts are not known at forecast time.
 - Calendar-based lag features are built on a complete daily calendar for each store's observed date span. Missing dates in the cleaned open-day-only file are treated as zero-sales history days.
 - The current validation protocol is one-day-ahead rolling evaluation: actual prior-day sales become available as the next day is predicted. It is not a fixed-origin 42-day forecast.
+- The Future Forecast page recursively uses each prediction as history for subsequent days. It assumes the store stays open and holds selected promotion/holiday assumptions constant.
 - The What-If tool is a model scenario, not a causal estimate. Historical lag features are held constant while the selected assumptions change.
 - The cleaned source contains open, positive-sales records only; the overview must not be interpreted as including closed-store sales.
 
