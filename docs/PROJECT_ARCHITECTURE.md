@@ -57,7 +57,7 @@ python src/modeling/train_lightgbm.py
 streamlit run app/app.py
 ```
 
-The 300-estimator command is a first local smoke test. The default training run uses up to 1,200 estimators with early stopping. GitHub Actions also has a real-data smoke workflow that trains a smaller model on the committed CSV and checks all five app pages.
+The 300-estimator command is a first local smoke test. The default training run uses up to 1,200 estimators with early stopping. GitHub Actions also has a real-data smoke workflow that trains the default model on the committed CSV and checks all five app pages.
 
 ## Validation boundaries
 
