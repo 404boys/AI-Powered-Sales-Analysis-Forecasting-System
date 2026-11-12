@@ -107,9 +107,9 @@ def build_features(data: pd.DataFrame) -> pd.DataFrame:
     frame["Year"] = frame["Date"].dt.year
     frame["Month"] = frame["Date"].dt.month
     frame["Day"] = frame["Date"].dt.day
-    frame["DayOfYear"] = frame["Date"].dt.dayofyear
+    frame["DayOfYear"] = frame["Date"].dt.day_of_year
     frame["WeekOfYear"] = frame["Date"].dt.isocalendar().week.astype("int16")
-    frame["DayOfWeek"] = frame["Date"].dt.dayofweek + 1
+    frame["DayOfWeek"] = frame["Date"].dt.day_of_week + 1
     frame["IsWeekend"] = (frame["Date"].dt.dayofweek >= 5).astype("int8")
 
     # Log-transform competition distance to reduce the effect of extreme distances.
