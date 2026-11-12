@@ -1,23 +1,23 @@
 # AI-Powered Sales Analysis and Forecasting System
 
-An end-to-end retail analytics and machine-learning project using the Rossmann Store Sales dataset. The project combines data preparation and exploratory analysis with a LightGBM sales forecasting model and an interactive Streamlit application.
+An end-to-end retail analytics and machine-learning project using the Rossmann Store Sales dataset. It combines exploratory analysis, reproducible data-quality checks, LightGBM forecasting, and an interactive Streamlit application.
 
 ## Project goals
 
 1. Understand historical store-level sales patterns.
-2. Prepare a reliable, analysis-ready dataset.
+2. Validate and prepare an analysis-ready dataset.
 3. Engineer calendar, store, promotion, and historical-sales features.
-4. Train and evaluate a machine-learning model using a chronological validation split.
-5. Explore store-level predictions and interactive promotion/holiday scenarios.
+4. Train and evaluate a machine-learning model with chronological validation.
+5. Explore store-level sales and interactive promotion/holiday scenarios.
 
 ## Main features
 
-- **Data analysis:** cleaning, exploratory analysis, and visualizations, plus a reproducible dataset-quality audit that exports JSON and Markdown.
+- **Data analysis:** data cleaning, exploratory analysis, and visualizations.
+- **Dataset audit:** a Python CLI that exports a Markdown and JSON quality report.
 - **Forecasting:** LightGBM regression on a log-transformed sales target.
-- **Time-aware features:** calendar variables, prior-day/prior-week/prior-fortnight sales, and shifted rolling statistics.
-- **Model evaluation:** RMSPE, MAE, RMSE, a matched-row 7-day-lag baseline comparison, and gain-based feature importance.
-- **Interactive website:** Streamlit pages for an overview, store-level sales exploration, What-If simulation, and model performance.
-- **What-If analysis:** compare model predictions after changing promotion and holiday assumptions for a selected historical store-day.
+- **Time-aware features:** prior-day, prior-week, prior-fortnight, and shifted rolling sales features.
+- **Model evaluation:** RMSPE, MAE, RMSE, matched-row seven-day-lag baseline comparison, and gain-based feature importance.
+- **Interactive website:** Overview, Sales Explorer, What-If Simulator, and Model Performance pages.
 
 ## Repository structure
 
@@ -26,18 +26,32 @@ An end-to-end retail analytics and machine-learning project using the Rossmann S
 ├── Data/
 │   └── Cleaned/
 │       └── store_sales_cleaned.csv
-├── Notebooks/                 # Existing data analysis notebooks
+├── Notebooks/
+│   ├── deep_analysis.ipynb
+│   └── superstore_sales_eda.ipynb
 ├── app/
-│   └── app.py                 # Streamlit application
+│   └── app.py
+├── docs/
+│   ├── MODEL_CARD.md
+│   ├── PROJECT_ARCHITECTURE.md
+│   ├── PROJECT_DEMO_GUIDE.md
+│   ├── VIVA_QUESTIONS.md
+│   └── WEBSITE_DEPLOYMENT.md
 ├── reports/
 │   └── model_evaluation.md
 ├── src/
+│   ├── data/
+│   │   └── validate_dataset.py
 │   ├── features/
 │   │   └── build_features.py
 │   └── modeling/
 │       └── train_lightgbm.py
 ├── tests/
+│   ├── test_dataset_validation.py
 │   └── test_features.py
+├── .github/workflows/
+│   ├── python-ci.yml
+│   └── model-smoke-test.yml
 ├── README.md
 ├── README_FORECASTING.md
 └── requirements.txt
@@ -45,17 +59,11 @@ An end-to-end retail analytics and machine-learning project using the Rossmann S
 
 ## Dataset
 
-The forecasting pipeline expects the cleaned CSV at:
-
-`Data/Cleaned/store_sales_cleaned.csv`
-
-Expected fields include store/date/sales, promotion and holiday indicators, store type and assortment, competition metadata, and Promo2 metadata. The training script validates required columns, positive sales, and unique Store-Date rows before training.
-
-The cleaned file used during development contains open, positive-sales store-days. Consequently, dashboard totals represent recorded rows and must not be interpreted as a complete total including closed stores.
+The forecasting pipeline expects the cleaned Rossmann CSV at `Data/Cleaned/store_sales_cleaned.csv`. The committed cleaned data contains open, positive-sales store-days. Dashboard totals therefore represent recorded rows and are not complete calendar totals including closed stores.
 
 ## Setup (Windows PowerShell)
 
-Open the repository root in VS Code. Then run:
+Run these commands from the repository root:
 
 ```powershell
 python -m venv .venv
@@ -65,17 +73,38 @@ python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-Python 3.10 or 3.11 is recommended for the most predictable compatibility with the ML ecosystem. If you already have another supported Python version and package installation succeeds, try the smoke test before changing your installation.
+Python 3.10 or 3.11 is recommended for predictable compatibility with the machine-learning dependencies.
 
-## Run the dataset quality audit\n\nBefore training, generate a reproducible quality summary from the cleaned CSV:\n\n```powershell\npython src/data/validate_dataset.py\n```\n\nThe command writes `reports/data_quality_audit.md` and `reports/data_quality_audit.json`. It reports missing values, duplicate Store-Date rows, invalid/zero/negative sales, date coverage, and unobserved store-days within each store's date span. Because the cleaned file contains only open, positive-sales rows, unobserved store-days are descriptive gaps—not automatically data errors.\n\n## Train the forecasting model
+## 1. Run the dataset quality audit
 
-Run from the repository root:
+```powershell
+python src/data/validate_dataset.py
+```
+
+This creates:
+
+- `reports/data_quality_audit.md`
+- `reports/data_quality_audit.json`
+
+The audit reports missing values, duplicate Store-Date keys, invalid/zero/negative sales, date coverage, and unobserved store-days within each store's observed date span. Since the cleaned source contains only open, positive-sales rows, an unobserved store-day is a descriptive gap—not automatically a data error.
+
+## 2. Run the automated tests
+
+```powershell
+python -m pytest -q
+```
+
+GitHub Actions runs the unit tests and Python syntax checks on pushes and pull requests. A separate real-data smoke-test workflow trains a small model against the committed dataset and checks all four Streamlit pages.
+
+## 3. Train the forecasting model
+
+First run a smaller local smoke test:
 
 ```powershell
 python src/modeling/train_lightgbm.py --n-estimators 300
 ```
 
-This smaller run is a first smoke test. After it completes successfully, run the full training configuration:
+Then run the full training configuration:
 
 ```powershell
 python src/modeling/train_lightgbm.py
@@ -86,61 +115,55 @@ Optional arguments:
 - `--data`: path to the cleaned CSV.
 - `--output-dir`: output directory for local model artifacts.
 - `--validation-days`: number of final calendar days reserved for validation (default: 42).
-- `--n-estimators`: maximum number of boosting rounds (default: 1200; early stopping may stop sooner).
+- `--n-estimators`: maximum boosting rounds (default: 1200; early stopping may stop sooner).
 
-Training creates these local files in `artifacts/model/`:
+Training creates local files in `artifacts/model/`:
 
 - `lightgbm_sales_model.joblib`
 - `metrics.json`
 - `feature_importance.csv`
 - `validation_predictions.csv`
 
-Generated model binaries and predictions are ignored by Git and are not committed by default.
+These generated model files are excluded from Git by default.
 
-## Run the website
+## 4. Run the website
 
-After a successful training run:
+After training completes successfully:
 
 ```powershell
 streamlit run app/app.py
 ```
 
-Streamlit prints a local URL (usually `http://localhost:8501`). Open it in your browser.
-
-### Website pages
+Open the local URL printed by Streamlit, usually `http://localhost:8501`.
 
 | Page | Purpose |
 |---|---|
-| Overview | Recorded sales trend, store-type comparison, and headline dataset counts |
-| Sales Explorer | Historical sales and selected operating details for one store |
-| What-If Simulator | Compare original and adjusted model predictions for promotion and holiday inputs |
-| Model Performance | Validation metrics and top model feature importances |
+| Overview | Recorded sales trends and store-type comparisons |
+| Sales Explorer | Historical sales for a selected store |
+| What-If Simulator | Compare predictions after changing promotion and holiday assumptions |
+| Model Performance | Validation metrics, matched baseline comparison, and feature importance |
 
-## Modelling approach
+## Modelling approach and limitations
 
 - The target is `Sales`, transformed with `log1p` for training and converted back with `expm1` for predictions.
-- `Customers` is excluded because future customer counts are not known when forecasting.
-- `Sales` is the target and is never included as a predictor.
-- `Open` is excluded because the cleaned file contains open, positive-sales records only.
+- `Customers` is excluded because future customer counts are not known at forecast time.
+- `Sales` is never used as a predictor, and `Open` is excluded because the cleaned data contains only open, positive-sales rows.
 - The final 42 calendar days are held out chronologically; dates are not randomly shuffled.
 - Validation is **one-day-ahead rolling evaluation**. Actual sales from earlier dates, including earlier dates within the validation window, can contribute to later validation-day lag features. This is not a fixed-origin 42-day forecast.
-- Missing dates within each store's observed date span are treated as zero-sales history days when calendar lags are built. The cleaned data cannot distinguish a closed day from an open day omitted due to zero sales; this assumption is documented in the evaluation report.
-- The What-If simulator holds historical lag features fixed. It is a model scenario, not a causal estimate of the effect of a promotion or holiday.
-
-## Tests
-
-Run the feature-engineering and dataset-audit tests:
-
-```powershell
-python -m pytest -q
-```
-
-GitHub Actions also runs the test suite and a Python syntax compilation check on pushes and pull requests.
+- Missing dates within each store's observed span are treated as zero-sales history days for lag construction. The source cannot distinguish closed days from open days omitted due to zero sales.
+- The What-If simulator holds historical lag features fixed. It is a model scenario, not a causal estimate of promotion or holiday effects.
+- Feature importance is model-specific and does not establish causation.
 
 ## Project status
 
-The analysis and forecasting/application code are in the repository. Model performance values should be reported only after running the training script and reviewing the generated `artifacts/model/metrics.json`. A successful GitHub code commit does not, by itself, mean the model has been trained or the website has been run.
+The source code, tests, documentation, dataset audit, forecasting pipeline, and Streamlit application are in the repository. Actual model-performance values must come from a completed training run and its generated `artifacts/model/metrics.json`. A passing CI run verifies the tested code path; it does not replace a full local training and demonstration check.
 
-## Evaluation report
+## Further documentation
 
-See [reports/model_evaluation.md](reports/model_evaluation.md) for the validation protocol, metrics to record, and modelling limitations.
+- [Forecasting guide](README_FORECASTING.md)
+- [Model card](docs/MODEL_CARD.md)
+- [Architecture](docs/PROJECT_ARCHITECTURE.md)
+- [Demo guide](docs/PROJECT_DEMO_GUIDE.md)
+- [Viva questions](docs/VIVA_QUESTIONS.md)
+- [Website deployment](docs/WEBSITE_DEPLOYMENT.md)
+- [Model evaluation report](reports/model_evaluation.md)
