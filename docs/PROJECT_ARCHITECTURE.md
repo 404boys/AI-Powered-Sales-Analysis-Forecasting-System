@@ -24,10 +24,12 @@ flowchart TD
 | Path | Responsibility |
 |---|---|
 | `Data/Cleaned/store_sales_cleaned.csv` | Cleaned store-day source data |
+| `src/data/validate_dataset.py` | Reproducible CSV quality audit with Markdown and JSON outputs |
 | `src/features/build_features.py` | Date handling, calendar history, lag/rolling features, and feature validation |
 | `src/modeling/train_lightgbm.py` | Input checks, chronological split, model training, evaluation, and artifact saving |
 | `app/app.py` | Streamlit interface, model loading, predictions, and What-If scenarios |
 | `tests/test_features.py` | Unit tests for calendar lags, leakage prevention, and invalid inputs |
+| `tests/test_dataset_validation.py` | Unit tests for dataset audit calculations and report output |
 | `artifacts/model/` | Local model, metrics, feature importance, and validation predictions |
 
 ## Training outputs
@@ -52,7 +54,7 @@ python src/modeling/train_lightgbm.py
 streamlit run app/app.py
 ```
 
-The 300-estimator command is a first smoke test. The default training run uses up to 1,200 estimators with early stopping.
+The 300-estimator command is a first local smoke test. The default training run uses up to 1,200 estimators with early stopping. GitHub Actions also has a real-data smoke workflow that trains a smaller model on the committed CSV and checks all four app pages.
 
 ## Validation boundaries
 
