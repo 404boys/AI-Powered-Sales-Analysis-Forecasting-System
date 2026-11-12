@@ -49,9 +49,9 @@ All members should understand the overall pipeline and limitations. Adjust this 
 
 - [ ] Run `python -m pytest -q`.
 - [ ] Run `python src/data/validate_dataset.py`.
-- [ ] Run the full default model training command and save its output.
+- [ ] Download the trained-model artifact from the successful Actions run or run the default training command locally.
 - [ ] Review `artifacts/model/metrics.json` and the matched baseline comparison.
 - [ ] Start the app and visit all five pages.
 - [ ] Test at least two Future Forecast horizons and two What-If scenarios.
-- [ ] Ensure the report uses final measured metrics, not smoke-test metrics as final results.
+- [ ] Ensure the report uses the verified 42-day full-training metrics.
 - [ ] Rehearse the presentation and agree on who explains each section.
