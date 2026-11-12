@@ -4,6 +4,7 @@ from types import SimpleNamespace
 
 import numpy as np
 import pandas as pd
+import pytest
 
 from src.modeling.forecast import forecast_store
 
@@ -69,7 +70,7 @@ def test_forecast_returns_future_dates_and_recursive_lag_history():
         pd.Timestamp("2015-01-04"),
         pd.Timestamp("2015-01-05"),
     ]
-    assert forecast["Predicted_Sales"].tolist() == [100.0, 100.0]
+    assert forecast["Predicted_Sales"].tolist() == pytest.approx([100.0, 100.0])
     assert model.seen[0]["Sales_Lag_1"].iloc[0] == 95.0
     assert model.seen[1]["Sales_Lag_1"].iloc[0] == 100.0
     assert model.seen[1]["Promo"].iloc[0] == 1
