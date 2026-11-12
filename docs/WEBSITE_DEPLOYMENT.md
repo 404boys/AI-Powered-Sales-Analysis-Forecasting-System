@@ -16,7 +16,7 @@
 
 3. Open the local URL printed by Streamlit, usually http://localhost:8501.
 
-The model file is generated locally under `artifacts/model/`. It is intentionally excluded from Git because it is a generated binary. The cleaned CSV is also required by the app.
+The model file is generated under `artifacts/model/` and is intentionally excluded from Git because it is a generated binary. The cleaned CSV is also required by the app. A verified trained model is available for a limited time as the `rossmann-full-model-and-evaluation` artifact in the [successful GitHub Actions run](https://github.com/404boys/AI-Powered-Sales-Analysis-Forecasting-System/actions/runs/43215506933). Download the ZIP and extract it at the repository root to restore the `artifacts/model/` files; alternatively, train locally using the documented command.
 
 ## Optional public deployment with Streamlit Community Cloud
 
@@ -25,7 +25,7 @@ The app can be deployed from the GitHub repository, but deployment requires a tr
 Recommended deployment path:
 
 1. Confirm that you are allowed to redistribute the cleaned dataset under its dataset licence/terms.
-2. Decide how the model artifact and dataset will be supplied to the hosting environment (for a student demo, a private storage location or an approved small demo dataset may be more appropriate).
+2. Decide how the model artifact and dataset will be supplied to the hosting environment. The Actions artifact is temporary, so use a durable approved storage location or a controlled release process for a public deployment.
 3. In Streamlit Community Cloud, create a new app and select this repository, the `main` branch, and `app/app.py` as the entry point.
 4. Configure any required secrets or data-download process using the host's secrets facility. Never commit passwords, access tokens, or private URLs to GitHub.
 5. Deploy and test all five pages after the app starts.
