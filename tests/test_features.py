@@ -54,7 +54,9 @@ def test_features_do_not_include_current_day_target() -> None:
 
 def test_log_competition_distance_is_created() -> None:
     featured = build_features(make_store_data())
-    expected = __import__("numpy").log1p(500)
+    import numpy as np
+
+    expected = np.log1p(500)
     assert featured.loc[featured["Store"] == 1, "Log_CompetitionDistance"].iloc[0] == pytest.approx(expected)
 
 
@@ -66,5 +68,5 @@ def test_missing_promo_interval_is_labelled_none() -> None:
 def test_duplicate_store_date_is_rejected() -> None:
     data = make_store_data()
     duplicated = pd.concat([data, data.iloc[[0]]], ignore_index=True)
-    with pytest.raises(pd.errors.MergeError):
+    with pytest.raises(ValueError, match="duplicate Store-Date"):
         build_features(duplicated)
