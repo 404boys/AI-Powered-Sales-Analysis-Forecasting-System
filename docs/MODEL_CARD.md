@@ -51,6 +51,10 @@ Metrics reported by the training script:
 
 Only values generated in the local `artifacts/model/metrics.json` after a successful training run should be reported. No benchmark values are pre-filled in this model card.
 
+## Future Forecast
+
+The application can generate recursive 7-, 14-, or 28-day forecasts after a store's last recorded date. Each predicted day's sales are fed into subsequent lag features. The demonstration assumes the store remains open and holds the selected promotion and holiday assumptions constant. It uses historical 2013–2015 data and is not a live current-date forecast.
+
 ## What-If Simulator
 
 The app includes a recursive Future Forecast page for 7-, 14-, or 28-day store forecasts. Predicted sales are fed into subsequent lag features; the current demo assumes the store stays open and holds selected promotion/holiday assumptions constant.
