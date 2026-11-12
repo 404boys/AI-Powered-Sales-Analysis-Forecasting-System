@@ -5,7 +5,10 @@ from __future__ import annotations
 import numpy as np
 import pandas as pd
 
-from features.build_features import CATEGORICAL_COLUMNS, FEATURE_COLUMNS
+try:
+    from features.build_features import CATEGORICAL_COLUMNS, FEATURE_COLUMNS
+except ModuleNotFoundError:  # Support imports through the src package in tests.
+    from src.features.build_features import CATEGORICAL_COLUMNS, FEATURE_COLUMNS
 
 
 def prepare_model_row(row: pd.Series, model) -> pd.DataFrame:
