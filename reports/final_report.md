@@ -1,127 +1,145 @@
-# AI-Powered Sales Analysis & Forecasting System
-## Exploratory Data Analysis & Data Preprocessing Report
+# AI-Powered Sales Analysis and Forecasting System
+## Project Report
 
-**Author:** Data Analytics & ML Engineering Team  
-**Date:** September 2026  
-**Environment:** Python 3.14 | Pandas | NumPy | Matplotlib | Seaborn  
+## 1. Executive summary
 
----
+This project analyzes historical retail sales and builds a store-level daily sales forecasting prototype using the Rossmann Store Sales dataset. It combines exploratory data analysis, a reproducible dataset-quality audit, calendar-based feature engineering, a LightGBM regression model, model evaluation, and an interactive Streamlit application.
 
-## 1. Executive Summary
+The application supports historical sales exploration, recursive future forecasts, promotion/holiday What-If scenarios, and model-performance review. The project is an academic prototype; it is not connected to a live retailer system.
 
-This report documents the end-to-end data audit, data engineering, cleaning, and exploratory data analysis (EDA) conducted on multi-table retail transactional records. The primary objective is to clean raw business operations data, identify customer demand patterns, analyze promotional elasticity, and engineer temporal signals to serve as a robust baseline for predictive time-series machine learning models (e.g., XGBoost, LightGBM, and Prophet).
+## 2. Business problem and objectives
 
-### Key Project Metrics
-* **Raw Transaction Records:** 1,017,209 rows across 1,115 unique retail outlets.
-* **Date Coverage:** January 1, 2013 to July 31, 2015 (942 calendar days).
-* **Operational Pruning:** 172,871 non-trading rows (`Open == 0` and zero-sales days) pruned.
-* **Revenue Preservation:** **100.00%** of total historical gross revenue ($5.87 billion) retained.
-* **Clean Modeling Records:** 844,338 fully validated transactions with 24 engineered features.
-* **Data Integrity:** **0 missing values**, **0 duplicate records**, **0 negative transactions**.
+Retail sales vary with promotions, holidays, store characteristics, competition, and recent demand. Forecasting daily store sales can help retailers plan inventory, staffing, and promotional activity.
 
----
+Project objectives:
 
-## 2. Business Problem & Analytical Objectives
+1. Explore historical sales patterns and data quality.
+2. Build a reproducible feature-engineering pipeline.
+3. Train a machine-learning model without using future customer counts or the current target as predictors.
+4. Evaluate the model with a chronological holdout and a simple weekly baseline.
+5. Present historical data, forecasts, and scenario comparisons in a usable application.
 
-Retail enterprises face demand volatility driven by promotional calendars, seasonal spikes, and competitor proximity. Inaccurate sales forecasts lead to overstocking costs or stockout revenue loss.
+## 3. Dataset profile and quality audit
 
-### Core Objectives:
-1. **Transaction Integrity Audit:** Detect structural data anomalies, duplicate checkouts, and mismatched operational flags.
-2. **Systematic Imputation:** Resolve high missingness across competitor and promotional metadata using business logic.
-3. **Behavioral Profiling:** Measure the revenue lift of active promotions and compare sales efficiency across store formats.
-4. **Feature Enrichment:** Construct cyclical temporal features and log-scale geographic metrics for downstream AI/ML forecasting algorithms.
+The committed cleaned dataset is `Data/Cleaned/store_sales_cleaned.csv`.
 
----
+| Dataset characteristic | Verified value |
+|---|---:|
+| Rows | 844,338 |
+| Columns | 24 |
+| Stores | 1,115 |
+| Date range | 2013-01-01 to 2015-07-31 |
+| Duplicate Store-Date rows | 0 |
+| Invalid dates | 0 |
+| Invalid, zero, or negative Sales rows | 0 |
+| Missing PromoInterval values | 423,292 |
+| Unobserved store-days within each store's observed date span | 204,372 |
 
-## 3. Data Architecture & Schema Validation
+The missing `PromoInterval` values are retained in the source and treated as the `None` category during feature engineering. They represent stores without a Promo2 interval schedule in this dataset, rather than a missing numeric sales value.
 
-### 3.1 Dataset Integration
-The raw operational records were constructed by joining daily store checkouts (`train.csv`) with store metadata (`store.csv`) using `Store` as the relational key, producing a unified schema of 1,017,209 rows and 18 columns.
+The cleaned file contains open, positive-sales store-days only. It does not contain a complete calendar record of closed stores or open days with zero sales. Therefore, the observed sales totals must not be described as complete all-store calendar totals.
 
-### 3.2 Data Quality Audit Findings
-* **Missing Value Mechanism (MAR):** $100\%$ of missing values in `PromoInterval`, `Promo2SinceWeek`, and `Promo2SinceYear` (508,031 rows, 49.94%) correspond strictly to stores where `Promo2 == 0`. These represent structural non-participation rather than random data loss.
-* **Competitor Inception Gaps:** `CompetitionOpenSinceMonth` and `Year` exhibited 31.79% missingness; `CompetitionDistance` had 2,642 missing records (0.26%).
-* **Operational Sanity Violations:** 54 instances showed active status (`Open == 1`) with zero gross sales (`Sales == 0`), representing store refurbishment or data logging dropouts.
-* **Temporal Continuity:** 934 out of 1,115 stores possess a full 942-day historical timeline; remaining stores entered operations in later phases.
+A reproducible audit is available:
 
----
+```powershell
+python src/data/validate_dataset.py
+```
 
-## 4. Data Cleaning & Feature Engineering Pipeline
+It writes `reports/data_quality_audit.md` and `reports/data_quality_audit.json`. Unobserved store-days are reported as descriptive gaps; the source does not tell us whether each gap was a closed day or an open zero-sales day.
 
-### 4.1 Transformation & Imputation Strategy
-1. **Temporal Parsing:** Cast `Date` from raw object strings to native `datetime64[us]` and sorted chronologically per store.
-2. **Geographical Median Imputation:** Imputed missing `CompetitionDistance` values with the sample median (2,330 meters) to avoid bias from long-tail rural outliers (max: 75,860m).
-3. **Structural Default Assignment:** Assigned zero (`0`) to unrecorded competitor start years/months and `Promo2` timeline trackers; assigned `"None"` to missing `PromoInterval` categories.
-4. **Operational Pruning:** Filtered out all closed store days (`Open == 0`) and zero-revenue records, reducing the dataset to 844,338 active trading rows while maintaining 100% gross revenue fidelity.
-5. **Categorical Standardization:** Mapped `StateHoliday` to clean discrete categories `['0', 'a', 'b', 'c']` and converted `StoreType` and `Assortment` to native categorical dtypes.
+## 4. Feature engineering
 
-### 4.2 Machine Learning Feature Generation
-* **Temporal Features:** Extracted `Year`, `Month`, `Day`, `WeekOfYear`, and a binary `IsWeekend` flag (`DayOfWeek` $\in [6, 7]$).
-* **Non-Linear Geographic Scaling:** Applied log-transformation:
-  $$\text{Log\_CompetitionDistance} = \ln(1 + \text{CompetitionDistance})$$
-  This stabilizes variance and addresses heavy right skewness ($9.77\%$ IQR outliers).
-* **Basket Productivity:** Computed historical baseline:
-  $$\text{SalesPerCustomer} = \frac{\text{Sales}}{\text{Customers}}$$
-  Showing a median basket of 9.25 currency units per transaction.
+The feature pipeline is implemented in `src/features/build_features.py`.
 
----
+It creates:
 
-## 5. Exploratory Data Analysis & Business Insights
+- Calendar features: year, month, day, day of year, week of year, day of week, and weekend flag.
+- Store and business features: store identifier, store type, assortment, promotion, holiday, competition, and Promo2 metadata.
+- Historical demand features: one-day, seven-day, and fourteen-day sales lags.
+- Rolling demand features: shifted seven-day and fourteen-day means and a shifted seven-day standard deviation.
+- Log-scaled competition distance: `log1p(CompetitionDistance)`.
 
-### 5.1 Sales Distribution
-* Daily store revenue exhibits a unimodal, right-skewed distribution centered between **5,500 and 7,000 currency units**.
-* High revenue outliers (> 20,000) reflect major promotional campaigns and flagship urban store volumes rather than measurement errors.
-* *Modeling Implication:* Tree-based gradient boosters (XGBoost/LightGBM) or optimizing root mean squared percentage error (RMSPE) on log-transformed targets are recommended.
+For each store, sales history is reindexed to daily dates within that store's observed span. Missing dates are represented as zero-sales history for lag construction. Rolling calculations shift the history by one day before aggregation, so the current day's target cannot enter its own predictors.
 
-### 5.2 Promotional Revenue Impact
-* Active promotional days (`Promo == 1`) produce a significant upward shift in median sales and customer basket sizes compared to non-promotional trading days.
-* *Business Action:* Promotions are a dominant driver of sales velocity; scheduling algorithms must prioritize promotional calendars.
+The target `Sales` is never used as a predictor. `Customers` is excluded because future customer counts are not known when a forecast is made. `Open` is excluded because the cleaned dataset contains open, positive-sales records only.
 
-### 5.3 Store Classification Archetypes
-* **StoreType b:** Generates the highest mean daily revenue despite representing only ~1.5% of total store locations (15,830 records).
-* **StoreTypes a & d:** Represent over 85% of the store network, acting as predictable baseline revenue generators.
+## 5. Machine-learning model
 
-### 5.4 Macro Seasonality & Annual Trends
-* A prominent and repeatable demand peak occurs every **December**, corresponding to holiday shopping volumes.
-* Demand stabilizes post-holiday (January–February), establishing predictable annual cyclicality.
+The model is a LightGBM gradient-boosted decision-tree regressor. It is trained on `log1p(Sales)`, and predictions are converted back to the original sales scale with `expm1`.
 
-### 5.5 Footfall vs. Revenue Elasticity
-* Customer footfall and gross sales demonstrate a strong linear Pearson correlation coefficient of **$r = 0.8236$**.
-* Footfall represents the primary operational predictor of total sales performance.
+Training is implemented in `src/modeling/train_lightgbm.py`. The default configuration uses up to 1,200 boosting rounds with early stopping. The final 42 calendar days are reserved chronologically for the default validation run; dates are not randomly shuffled.
 
----
+The validation design is **one-day-ahead rolling evaluation**. Actual sales from earlier dates in the validation window may be used as history for later validation dates. This is not a fixed-origin 42-day forecast made at the beginning of the validation period.
 
-## 6. Recommendations for Downstream ML Modeling
+## 6. Preliminary real-data smoke-test results
 
-1. **Target Transformation:** Train forecasting models on $\ln(1 + \text{Sales})$ to prevent high-revenue spikes from dominating loss functions.
-2. **Evaluation Metric:** Use **RMSPE (Root Mean Square Percentage Error)** to align optimization with retail industry standards.
-3. **Feature Priority:** Include `Promo`, `Customers` (or estimated footfall lags), `StoreType`, `WeekOfYear`, and `Log_CompetitionDistance` as primary features.
-4. **Time-Series Split:** Use temporal cross-validation (e.g., train on 2013–2014, validate on 2015) to prevent future data leakage.
+The real-data GitHub Actions smoke test successfully trained a small model using 40 boosting rounds and a 14-day validation window. The run used the committed dataset and evaluated 13,420 validation rows from 2015-07-18 to 2015-07-31.
 
----
-*Certified Clean Dataset Location:* `Data/Cleaned/store_sales_cleaned.csv`  
-*Generated Visualization Assets:* `Visualizations/`
----
+| Metric | 40-round model | Seven-day lag baseline |
+|---|---:|---:|
+| RMSPE | 13.87% | 36.07% |
+| MAE | 700.72 | 2,083.16 |
 
-# 🤖 Part 2: Advanced Deep-Dive Insights for AI/ML Modeling Team
+The model and baseline were evaluated on the same 13,420 rows. The smoke-test run used all 40 requested rounds; it did not establish the final best iteration for the default 1,200-round training configuration.
 
-### 1. Store Clustering & Heterogeneity
-- **Observation:** Store-gulo ke 3-ti performance tier-e (`Low_Tier`, `Medium_Tier`, `High_Tier`) vag kora hoyeche. High-tier store-gulo te footfall ebong basket size dutoi onek beshi.
-- **ML Guidance:** Tree-based models (XGBoost/LightGBM)-e store-level heteroscedasticity handle korar jonno cross-validation folds-er vitor theke Target Encoding (`Store_Avg_Sales`, `Store_Std_Sales`) use korte hobe.
+These values are **preliminary smoke-test results**, not the final full-training result. The final report should be updated after running the default training command locally and reviewing `artifacts/model/metrics.json`. Do not present the smoke-test scores as the final 42-day evaluation.
 
-### 2. Basket Size & Data Leakage Warning
-- **Critical Warning:** `Customers` column-er sathe `Sales`-er correlation shobcheye beshi thakleo test set ba real-world forecasting-e actual customer count thakbe na.
-- **ML Guidance:** Direct raw `Customers` feature hisebe use na kore historical proxy features (jemon: `Store_Historical_SalesPerCustomer` ebong `Store_Avg_Customers`) build korte hobe.
+Metrics used:
 
-### 3. Promotional Dynamics & Weekly Cyclicity
-- **Observation:** Promotion-er impact shob din shoman noy; Monday ebong Friday-te promotional lift shobcheye beshi dekha jay.
-- **ML Guidance:** Model-e interaction terms add korte hobe, jemon `Promo_x_DayOfWeek` ba `Is_Promo_Monday`.
+- **RMSPE:** root mean squared percentage error, suitable here because validation sales are positive.
+- **MAE:** average absolute prediction error in the dataset's sales units.
+- **RMSE:** square root of mean squared error, which penalizes larger errors more strongly.
 
-### 4. Seasonality & Holiday Buffers
-- **Observation:** December-e annual peak spike hoy ebong State Holiday-r thik ager din customer-ra stocking kore, jar fole abnormal sales hike hoy.
-- **ML Guidance:** Features hisebe `Days_Until_Christmas`, `Days_Before_StateHoliday`, ebong `Days_After_StateHoliday` count variables inject korte hobe.
+## 7. Streamlit application
 
-### 5. Time-Series Autoregressive Lags
-- **Observation:** Autocorrelation analysis onujayi `Lag_7` (7 diner ager sales) ebong `7-Day Rolling Mean` shobcheye strong predictor.
-- **ML Guidance:** Autoregressive feature matrix-e `Sales_Lag_7`, `Sales_Lag_14`, ebong `Rolling_Mean_7` must include korte hobe.
-- **Validation Split:** Kono random train-test split use kora jabe na; strictly time-series chronological split (e.g. last 6 weeks as validation) follow korte hobe.
+Run the app after training a model:
+
+```powershell
+streamlit run app/app.py
+```
+
+The app contains five pages:
+
+1. **Overview:** recorded sales totals, daily trend, and store-type comparison.
+2. **Sales Explorer:** historical sales for a selected store.
+3. **Future Forecast:** recursive daily forecasts for 7, 14, or 28 days after the selected store's last recorded date.
+4. **What-If Simulator:** changes promotion, school-holiday, and state-holiday assumptions for a historical store-day and compares predictions.
+5. **Model Performance:** validation metrics, a matched-row seven-day baseline comparison, and gain-based feature importance.
+
+The Future Forecast page feeds each predicted day's sales into the lag history for subsequent days. It assumes the store remains open and holds the selected promotion and holiday assumptions constant across the horizon. It is a demonstration based on historical 2013–2015 data, not a live 2026 forecast, and it does not currently quantify prediction intervals.
+
+The What-If simulator also holds historical lag features fixed. Its output is a model-based scenario, not a causal estimate of the impact of changing a promotion or holiday.
+
+## 8. Testing and reproducibility
+
+The repository includes unit tests for calendar feature engineering, leakage safeguards, dataset audit calculations, and recursive forecasting.
+
+Run locally:
+
+```powershell
+python -m pytest -q
+python src/data/validate_dataset.py
+python src/modeling/train_lightgbm.py
+streamlit run app/app.py
+```
+
+GitHub Actions provides:
+- Lightweight Python unit tests and syntax checks.
+- A real-data smoke workflow that audits the committed CSV, trains a small LightGBM model, and checks all five Streamlit pages.
+
+A successful smoke workflow verifies that the tested pipeline and app paths execute on the committed data. The full default training run and an in-browser demonstration on the student's own machine should still be completed before final submission.
+
+## 9. Limitations and future improvements
+
+1. The cleaned dataset omits closed and zero-sales store-days; the model does not predict whether a store will be open.
+2. Missing calendar dates are approximated as zero-sales history for lag features.
+3. Validation uses observed prior sales during the validation window and is not a fixed-origin multi-week forecast.
+4. Future forecast assumptions are held constant over the selected horizon, and forecast uncertainty is not yet quantified.
+5. The What-If simulator is not a causal experiment.
+6. The data is historical and does not represent current store operations.
+
+Potential future work includes explicit store-open modelling, known future promotion calendars, holiday-calendar integration, prediction intervals, store-level error diagnostics, and retraining/monitoring workflows.
+
+## 10. Conclusion
+
+The project provides an end-to-end academic workflow from cleaned retail data and exploratory analysis through feature engineering, LightGBM forecasting, evaluation, and an interactive application. Its key differentiators are calendar-correct lag features, leakage safeguards, recursive multi-day forecasting, and an interactive What-If simulator. All reported performance claims should remain tied to reproducible training outputs and the documented limitations of the dataset and validation design.
