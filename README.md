@@ -158,7 +158,7 @@ The Future Forecast page assumes the selected store stays open and holds the cho
 
 ## Project status
 
-The repository includes the cleaned dataset, analysis notebooks, data audit, feature pipeline, recursive forecasting code, tests, Streamlit app, and project documentation. A 40-round, 14-day real-data smoke test has completed; its preliminary metrics are in [the model evaluation report](reports/model_evaluation.md). Run the default 1,200-round/42-day training locally before presenting final model results.
+The repository includes the cleaned dataset, analysis notebooks, data audit, feature pipeline, recursive forecasting code, tests, Streamlit app, and project documentation. The default 1,200-round/42-day training run and automated checks of all five app pages have completed successfully. Final measured results are in [the model evaluation report](reports/model_evaluation.md). The trained model and evaluation files are available in the [successful GitHub Actions run artifact](https://github.com/404boys/AI-Powered-Sales-Analysis-Forecasting-System/actions/runs/43215506933).
 
 ## Further documentation
 
