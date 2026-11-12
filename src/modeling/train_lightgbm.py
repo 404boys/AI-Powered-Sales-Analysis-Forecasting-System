@@ -136,6 +136,7 @@ def main() -> None:
         random_state=42,
         n_jobs=-1,
         verbosity=-1,
+        importance_type="gain",
     )
 
     print(
@@ -166,14 +167,24 @@ def main() -> None:
     lag_7 = valid["Sales_Lag_7"].to_numpy(dtype=float)
     baseline_mask = np.isfinite(lag_7)
     if baseline_mask.any():
+        # Compare model and baseline on the exact same rows. Some stores may
+        # not have seven days of history at the start of the validation window.
+        matched_model_metrics = calculate_metrics(
+            actual[baseline_mask],
+            predictions[baseline_mask],
+        )
         baseline_metrics = calculate_metrics(
             actual[baseline_mask],
             lag_7[baseline_mask],
         )
+        metrics["Model_On_BaselineRows_RMSPE"] = matched_model_metrics["RMSPE"]
+        metrics["Model_On_BaselineRows_MAE"] = matched_model_metrics["MAE"]
         metrics["Baseline_7DayLag_RMSPE"] = baseline_metrics["RMSPE"]
         metrics["Baseline_7DayLag_MAE"] = baseline_metrics["MAE"]
         metrics["baseline_rows"] = int(baseline_mask.sum())
     else:
+        metrics["Model_On_BaselineRows_RMSPE"] = None
+        metrics["Model_On_BaselineRows_MAE"] = None
         metrics["Baseline_7DayLag_RMSPE"] = None
         metrics["Baseline_7DayLag_MAE"] = None
         metrics["baseline_rows"] = 0
