@@ -2,7 +2,7 @@
 
 ## Evaluation status
 
-<badge>Preliminary smoke test completed</badge>
+**Status: Preliminary real-data smoke test completed.**
 
 A real-data smoke test completed successfully in GitHub Actions using the committed cleaned CSV. It trained a 40-round LightGBM model with a 14-calendar-day chronological validation window. This verifies that the data pipeline and model-training path execute on the actual repository dataset.
 
