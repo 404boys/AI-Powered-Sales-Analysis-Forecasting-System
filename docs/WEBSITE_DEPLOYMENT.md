@@ -28,6 +28,6 @@ Recommended deployment path:
 2. Decide how the model artifact and dataset will be supplied to the hosting environment (for a student demo, a private storage location or an approved small demo dataset may be more appropriate).
 3. In Streamlit Community Cloud, create a new app and select this repository, the `main` branch, and `app/app.py` as the entry point.
 4. Configure any required secrets or data-download process using the host's secrets facility. Never commit passwords, access tokens, or private URLs to GitHub.
-5. Deploy and test all four pages after the app starts.
+5. Deploy and test all five pages after the app starts.
 
 A GitHub repository commit alone does not publish a running website. The hosting setup and model/data availability must also be completed.
