@@ -7,3 +7,8 @@ __pycache__/
 
 # Raw data (optional: if you don't want to upload massive raw CSVs to GitHub)
 # Data/Raw/
+# Locally generated model artifacts and predictions
+artifacts/model/
+
+# Streamlit secrets
+.streamlit/secrets.toml
