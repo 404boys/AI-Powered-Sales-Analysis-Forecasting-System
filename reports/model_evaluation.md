@@ -2,11 +2,9 @@
 
 ## Evaluation status
 
-**Status: Preliminary real-data smoke test completed.**
+**Status: Full default model training and application smoke tests completed successfully.**
 
-A real-data smoke test completed successfully in GitHub Actions using the committed cleaned CSV. It trained a 40-round LightGBM model with a 14-calendar-day chronological validation window. This verifies that the data pipeline and model-training path execute on the actual repository dataset.
-
-**This is not the final full training result.** The default local training configuration uses up to 1,200 rounds and a 42-day validation window. Run that configuration before final submission and replace or supplement the preliminary results below with the generated `artifacts/model/metrics.json`.
+The default training configuration completed in GitHub Actions against the committed cleaned dataset. It used up to 1,200 boosting rounds and the final 42 calendar days for chronological validation. All five Streamlit pages also completed the automated app smoke test.
 
 ## Dataset and validation design
 
@@ -14,36 +12,33 @@ A real-data smoke test completed successfully in GitHub Actions using the commit
 - Rows: 844,338
 - Stores: 1,115
 - Date range: 2013-01-01 to 2015-07-31
-- Model: LightGBM regressor trained on `log1p(Sales)`
-- Smoke-test validation: final 14 calendar days, held out chronologically
-- Validation rows: 13,420
-- Validation dates: 2015-07-18 to 2015-07-31
-- Training rows: 830,918
-- Best iteration: 40 (the smoke test was capped at 40 rounds and did not reach early stopping)
+- Model: LightGBMRegressor trained on `log1p(Sales)`
+- Training rows: 804,056
+- Validation rows: 40,282
+- Validation dates: 2015-06-20 to 2015-07-31
+- Maximum boosting rounds: 1,200
+- Best iteration: 1,200 (early stopping did not trigger before the maximum)
 
-## Preliminary real-data smoke-test results
+## Full default model results
 
-| Metric | 40-round model | Seven-day lag baseline |
+| Metric | LightGBM model | Seven-day lag baseline |
 |---|---:|---:|
-| RMSPE | 13.87% | 36.07% |
-| MAE | 700.72 | 2,083.16 |
-| Evaluation rows | 13,420 | 13,420 |
+| RMSPE | **11.14%** | 41.02% |
+| MAE | **539.12** | 2,191.87 |
+| RMSE | 790.73 | Not exported for baseline |
+| Evaluation rows | 40,282 | 40,282 |
 
-The model and baseline were evaluated on the same 13,420 rows, making the comparison directly comparable. Values are in the dataset's sales units where applicable.
+The model and baseline were evaluated on the exact same 40,282 validation rows. MAE and RMSE values are in the dataset's sales units.
 
-Interpretation: in this short smoke-test configuration, the LightGBM model outperformed the simple seven-day lag baseline on both RMSPE and MAE. This should be treated as preliminary evidence only; it does not establish final performance under the default 42-day/1,200-round configuration.
+The model outperformed the seven-day lag baseline on RMSPE and MAE in this run. These values are measured from the full default training configuration. The trained model, metrics, feature importance, validation predictions, and data audit are available in the GitHub Actions artifact named `rossmann-full-model-and-evaluation` for the successful full model workflow run.
 
-## Metrics to report after full training
+## Metric definitions
 
-| Metric | Meaning |
-|---|---|
-| RMSPE | Root mean squared percentage error on positive-sales validation rows |
-| MAE | Mean absolute error in the dataset's sales units |
-| RMSE | Root mean squared error in the dataset's sales units |
-| Model-on-baseline-rows metrics | Model error on the exact rows where a seven-day lag is available |
-| Seven-day lag baseline | Error from predicting each store's sales using its sales seven calendar days earlier |
-
-The training script saves full-run metrics to `artifacts/model/metrics.json`, feature importance to `artifacts/model/feature_importance.csv`, and validation predictions to `artifacts/model/validation_predictions.csv`.
+- **RMSPE:** root mean squared percentage error on positive-sales validation rows.
+- **MAE:** mean absolute error in the dataset's sales units.
+- **RMSE:** root mean squared error in the dataset's sales units.
+- **Seven-day lag baseline:** predicts each store's sales using its sales seven calendar days earlier.
+- **Matched-row comparison:** model and baseline are evaluated on the same rows where a seven-day lag is available.
 
 ## Forecast protocol and limitations
 
@@ -63,6 +58,7 @@ From the repository root:
 
 ```powershell
 python -m pip install -r requirements.txt
+python -m pytest -q
 python src/data/validate_dataset.py
 python src/modeling/train_lightgbm.py
 ```
