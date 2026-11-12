@@ -259,6 +259,22 @@ elif page == "Model Performance":
             f"{metrics.get('validation_end', 'N/A')} · "
             f"{metrics.get('forecast_type', 'Forecast protocol not recorded')}"
         )
+
+        baseline_rmspe = metrics.get("Baseline_7DayLag_RMSPE")
+        matched_model_rmspe = metrics.get("Model_On_BaselineRows_RMSPE")
+        if baseline_rmspe is not None and matched_model_rmspe is not None:
+            st.markdown("**Fair baseline comparison (same validation rows)**")
+            baseline_cols = st.columns(3)
+            baseline_cols[0].metric("Model RMSPE", f"{matched_model_rmspe:.2%}")
+            baseline_cols[1].metric("7-day lag baseline RMSPE", f"{baseline_rmspe:.2%}")
+            baseline_cols[2].metric(
+                "Rows compared",
+                f"{metrics.get('baseline_rows', 0):,}",
+            )
+            st.caption(
+                "The matched comparison excludes validation rows without a seven-day "
+                "history value. Overall model metrics above still use the full validation set."
+            )
         st.json(metrics)
     else:
         st.info("Run the training script to generate validation metrics.")
