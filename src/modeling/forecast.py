@@ -4,8 +4,12 @@ from __future__ import annotations
 
 import pandas as pd
 
-from features.build_features import build_features
-from modeling.predict import predict_sales
+try:
+    from features.build_features import build_features
+    from modeling.predict import predict_sales
+except ModuleNotFoundError:  # Support imports through the src package in tests.
+    from src.features.build_features import build_features
+    from src.modeling.predict import predict_sales
 
 
 def forecast_store(
