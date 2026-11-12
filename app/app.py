@@ -7,7 +7,6 @@ from pathlib import Path
 import sys
 
 import joblib
-import numpy as np
 import pandas as pd
 import plotly.express as px
 import streamlit as st
@@ -15,7 +14,9 @@ import streamlit as st
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from features.build_features import CATEGORICAL_COLUMNS, FEATURE_COLUMNS, build_features
+from features.build_features import build_features
+from modeling.forecast import forecast_store
+from modeling.predict import predict_sales
 
 DATA_PATH = ROOT / "Data" / "Cleaned" / "store_sales_cleaned.csv"
 MODEL_PATH = ROOT / "artifacts" / "model" / "lightgbm_sales_model.joblib"
@@ -29,44 +30,22 @@ st.set_page_config(
 )
 
 
-@st.cache_data(show_spinner="Loading cleaned sales data and building historical features...")
+@st.cache_data(show_spinner="Loading cleaned sales data...")
+def load_raw_data(path_string: str) -> pd.DataFrame:
+    """Load the cleaned source file once."""
+    return pd.read_csv(path_string, low_memory=False)
+
+
+@st.cache_data(show_spinner="Building historical forecasting features...")
 def load_featured_data(path_string: str) -> pd.DataFrame:
-    """Load the cleaned file once and construct model-ready features."""
-    raw = pd.read_csv(path_string, low_memory=False)
-    return build_features(raw)
+    """Construct model-ready features from the cached raw dataset."""
+    return build_features(load_raw_data(path_string))
 
 
 @st.cache_resource(show_spinner="Loading trained forecasting model...")
 def load_model(path_string: str):
     """Load the locally trained LightGBM model."""
     return joblib.load(path_string)
-
-
-def prepare_model_row(row: pd.Series, model) -> pd.DataFrame:
-    """Apply the exact categorical levels saved by LightGBM during training."""
-    # Build from a dictionary so numeric columns retain numeric dtypes.
-    # row.to_frame().T can coerce every predictor to object dtype.
-    X = pd.DataFrame([{column: row[column] for column in FEATURE_COLUMNS}])
-    saved_categories = getattr(model.booster_, "pandas_categorical", None) or []
-    category_position = 0
-
-    for column in CATEGORICAL_COLUMNS:
-        if column in X.columns:
-            if category_position < len(saved_categories):
-                levels = saved_categories[category_position]
-                X[column] = pd.Categorical(X[column], categories=levels)
-            else:
-                X[column] = X[column].astype("category")
-            category_position += 1
-
-    return X
-
-
-def predict_sales(model, row: pd.Series) -> float:
-    """Predict sales by reversing the log1p target transformation."""
-    X = prepare_model_row(row, model)
-    prediction = model.predict(X, num_iteration=model.best_iteration_)
-    return float(max(0, np.expm1(prediction[0])))
 
 
 st.title("Rossmann Sales Intelligence")
@@ -87,6 +66,7 @@ if not MODEL_PATH.exists():
     )
     st.stop()
 
+raw_data = load_raw_data(str(DATA_PATH))
 featured = load_featured_data(str(DATA_PATH))
 model = load_model(str(MODEL_PATH))
 
@@ -107,7 +87,7 @@ if featured.empty:
 st.sidebar.header("Explore")
 page = st.sidebar.radio(
     "Section",
-    ["Overview", "Sales Explorer", "What-If Simulator", "Model Performance"],
+    ["Overview", "Sales Explorer", "Future Forecast", "What-If Simulator", "Model Performance"],
 )
 
 minimum_date = featured["Date"].min().date()
@@ -168,6 +148,84 @@ elif page == "Sales Explorer":
         store_data[["Date", "Sales", "Promo", "Customers", "SchoolHoliday"]].tail(30),
         use_container_width=True,
         hide_index=True,
+    )
+
+elif page == "Future Forecast":
+    st.subheader("Future Store Sales Forecast")
+    st.write(
+        "Generate a recursive daily forecast after the selected store's last recorded date. "
+        "Each predicted day is fed into the next day's lag features."
+    )
+
+    selected_store = st.selectbox("Choose a store", stores, key="future_store")
+    horizon = st.selectbox("Forecast horizon", [7, 14, 28], index=0)
+    st.markdown("**Assumptions for every forecast day**")
+    x, y, z = st.columns(3)
+    with x:
+        forecast_promo = st.selectbox(
+            "Promotion",
+            [0, 1],
+            format_func=lambda value: "On" if value else "Off",
+            key="future_promo",
+        )
+    with y:
+        forecast_school_holiday = st.selectbox(
+            "School holiday",
+            [0, 1],
+            format_func=lambda value: "Yes" if value else "No",
+            key="future_school_holiday",
+        )
+    with z:
+        forecast_state_holiday = st.selectbox(
+            "State holiday",
+            ["0", "a", "b", "c"],
+            format_func=lambda value: "None" if value == "0" else value.upper(),
+            key="future_state_holiday",
+        )
+
+    store_history = raw_data.loc[raw_data["Store"] == selected_store]
+    last_store_date = pd.to_datetime(store_history["Date"]).max()
+    st.caption(
+        f"Forecast starts after {last_store_date:%d %b %Y}. "
+        "The store is assumed to remain open, and the selected assumptions are held constant."
+    )
+
+    forecast = forecast_store(
+        raw_data,
+        model,
+        store_id=selected_store,
+        horizon=int(horizon),
+        promo=int(forecast_promo),
+        school_holiday=int(forecast_school_holiday),
+        state_holiday=forecast_state_holiday,
+    )
+    total_forecast = forecast["Predicted_Sales"].sum()
+    average_forecast = forecast["Predicted_Sales"].mean()
+    k1, k2, k3 = st.columns(3)
+    k1.metric("Forecast total", f"{total_forecast:,.0f}")
+    k2.metric("Average daily forecast", f"{average_forecast:,.0f}")
+    k3.metric("Forecast days", f"{len(forecast):,}")
+
+    fig = px.line(
+        forecast,
+        x="Date",
+        y="Predicted_Sales",
+        markers=True,
+        title=f"Recursive {horizon}-day sales forecast — Store {selected_store}",
+    )
+    fig.update_layout(xaxis_title=None, yaxis_title="Predicted sales")
+    st.plotly_chart(fig, use_container_width=True)
+    st.dataframe(forecast, use_container_width=True, hide_index=True)
+    st.download_button(
+        "Download forecast CSV",
+        data=forecast.to_csv(index=False).encode("utf-8"),
+        file_name=f"store_{selected_store}_{horizon}_day_forecast.csv",
+        mime="text/csv",
+    )
+    st.warning(
+        "This is a historical-data demonstration, not a live 2026 forecast. "
+        "It assumes the store is open every forecast day and holds promotion/holiday "
+        "assumptions constant. Forecast uncertainty is not currently quantified."
     )
 
 elif page == "What-If Simulator":
