@@ -14,7 +14,7 @@ import streamlit as st
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from features.build_features import build_features
+from features.build_features import FEATURE_COLUMNS, build_features
 from modeling.forecast import forecast_store
 from modeling.predict import predict_sales
 
