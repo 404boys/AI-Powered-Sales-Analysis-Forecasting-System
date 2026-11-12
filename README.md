@@ -94,7 +94,7 @@ This creates `reports/data_quality_audit.md` and `reports/data_quality_audit.jso
 python -m pytest -q
 ```
 
-GitHub Actions runs unit tests and Python syntax checks on pushes and pull requests. A separate real-data smoke-test workflow audits the committed dataset, trains a small model, and checks all five Streamlit pages.
+GitHub Actions runs unit tests and Python syntax checks on pushes and pull requests. A separate real-data smoke-test workflow audits the committed dataset, trains the default model on the full cleaned dataset, and checks all five Streamlit pages.
 
 ## 3. Train the forecasting model
 
