@@ -39,8 +39,8 @@ jobs:
       - name: Audit the committed cleaned dataset
         run: python src/data/validate_dataset.py
 
-      - name: Train a real-data smoke-test model
-        run: python src/modeling/train_lightgbm.py --n-estimators 40 --validation-days 14
+      - name: Train and evaluate the default model on the full cleaned dataset
+        run: python src/modeling/train_lightgbm.py
 
       - name: Smoke-test the Streamlit application
         run: |
@@ -69,10 +69,12 @@ jobs:
       - name: Upload smoke-test evaluation outputs
         uses: actions/upload-artifact@v4
         with:
-          name: rossmann-model-smoke-test
+          name: rossmann-full-model-and-evaluation
           path: |
+            artifacts/model/lightgbm_sales_model.joblib
             artifacts/model/metrics.json
             artifacts/model/feature_importance.csv
+            artifacts/model/validation_predictions.csv
             reports/data_quality_audit.md
             reports/data_quality_audit.json
           if-no-files-found: error
