@@ -44,7 +44,9 @@ def load_model(path_string: str):
 
 def prepare_model_row(row: pd.Series, model) -> pd.DataFrame:
     """Apply the exact categorical levels saved by LightGBM during training."""
-    X = row[FEATURE_COLUMNS].to_frame().T
+    # Build from a dictionary so numeric columns retain numeric dtypes.
+    # row.to_frame().T can coerce every predictor to object dtype.
+    X = pd.DataFrame([{column: row[column] for column in FEATURE_COLUMNS}])
     saved_categories = getattr(model.booster_, "pandas_categorical", None) or []
     category_position = 0
 
