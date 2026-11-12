@@ -54,13 +54,16 @@ jobs:
           app.sidebar.radio[0].set_value("Sales Explorer").run()
           assert not app.exception, app.exception
 
+          app.sidebar.radio[0].set_value("Future Forecast").run()
+          assert not app.exception, app.exception
+
           app.sidebar.radio[0].set_value("What-If Simulator").run()
           assert not app.exception, app.exception
 
           app.sidebar.radio[0].set_value("Model Performance").run()
           assert not app.exception, app.exception
 
-          print("All four Streamlit pages completed without app exceptions.")
+          print("All five Streamlit pages completed without app exceptions.")
           PY
 
       - name: Upload smoke-test evaluation outputs
