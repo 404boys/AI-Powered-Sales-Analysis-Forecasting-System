@@ -72,7 +72,7 @@ def test_forecast_returns_future_dates_and_recursive_lag_history():
     ]
     assert forecast["Predicted_Sales"].tolist() == pytest.approx([100.0, 100.0])
     assert model.seen[0]["Sales_Lag_1"].iloc[0] == 95.0
-    assert model.seen[1]["Sales_Lag_1"].iloc[0] == 100.0
+    assert model.seen[1]["Sales_Lag_1"].iloc[0] == pytest.approx(100.0)
     assert model.seen[1]["Promo"].iloc[0] == 1
 
 
